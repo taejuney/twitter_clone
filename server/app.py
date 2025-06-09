@@ -192,7 +192,6 @@ def update_profile():
 
     user.display_name    = data.get('display_name', user.display_name)
     user.bio             = data.get('bio', user.bio)
-    user.profile_pic_url = data.get('profile_pic_url', user.profile_pic_url)
     db.session.commit()
     return jsonify(msg='Profile updated'), 200
 
@@ -215,7 +214,6 @@ def get_user_profile(username):
         "username":        target.username,
         "display_name":    target.display_name,
         "bio":             target.bio,
-        "profile_pic_url": target.profile_pic_url,
         "created_at":      target.created_at.isoformat()
       },
       "is_following": is_following,

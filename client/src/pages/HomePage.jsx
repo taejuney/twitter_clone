@@ -5,39 +5,28 @@ import { AuthContext } from '../context/AuthContext';
 
 export default function HomePage() {
   const { user } = useContext(AuthContext);
-  const [tweets, setTweets] = useState([]); 
-  const [error, setError]   = useState('');
-  const navigate             = useNavigate();
+  const [tweets, setTweets] = useState([]);
+  const navigate = useNavigate();
 
+  // fetch feed on mount
   useEffect(() => {
-    if (!user) return;
-    (async () => {
-      try {
-        const res = await fetch('/tweets/feed', {
-          headers: {
-            'Authorization': `Bearer ${user.token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-        if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error(body.msg || res.statusText);
+    async function load() {
+      const res = await fetch('/tweets/feed', {
+        headers: { 
+          'Authorization': `Bearer ${user.token}` 
         }
-        setTweets(await res.json());
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load feed.');
+      });
+      if (!res.ok) {
+        console.error('Failed to load feed');
+        return;
       }
-    })();
+      setTweets(await res.json());
+    }
+    load();
   }, [user]);
 
-  if (error) {
-    return (
-      <div>
-        <NavBar />
-        <p className="text-red-500 text-center mt-6">{error}</p>
-      </div>
-    );
+  if (!Array.isArray(tweets)) {
+    return <div>Failed to load feed</div>;
   }
 
   return (
@@ -75,6 +64,11 @@ export default function HomePage() {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${user.token}` }
                   });
+                  // reload feed
+                  const r2 = await fetch('/tweets/feed', {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                  });
+                  setTweets(await r2.json());
                 }}
                 className="hover:text-blue-500"
               >
@@ -87,6 +81,11 @@ export default function HomePage() {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${user.token}` }
                   });
+                  // reload feed
+                  const r2 = await fetch('/tweets/feed', {
+                    headers: { 'Authorization': `Bearer ${user.token}` }
+                  });
+                  setTweets(await r2.json());
                 }}
                 className="hover:text-red-500"
               >
