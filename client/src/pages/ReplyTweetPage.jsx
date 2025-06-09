@@ -4,30 +4,33 @@ import NavBar from '../components/NavBar';
 import { AuthContext } from '../context/AuthContext';
 
 export default function ReplyTweetPage() {
-  const { user } = useContext(AuthContext);
-  const { id }   = useParams();
+  const { id } = useParams();           // original tweet ID
+  const { user, token } = useContext(AuthContext);
   const [content, setContent] = useState('');
   const navigate = useNavigate();
 
   const handleReply = async () => {
+    if (!content.trim()) return alert('Reply cannot be empty');
     const res = await fetch('/comments', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${user.token}`
+        'Authorization': `Bearer ${token}`
       },
-      body: JSON.stringify({ tweet_id: parseInt(id), content })
+      body: JSON.stringify({ tweet_id: Number(id), content })
     });
     if (res.ok) {
+      // go show all replies (including this one)
       navigate(`/replies/${id}`);
     } else {
-      alert('Failed to post reply');
+      const err = await res.json().catch(()=>null);
+      alert(`Failed to post reply: ${err?.msg||res.statusText}`);
     }
   };
 
   return (
     <div>
-      <NavBar />
+      <NavBar/>
       <div className="p-8 max-w-md mx-auto">
         <h2 className="text-xl mb-4">Reply to Tweet #{id}</h2>
         <textarea
