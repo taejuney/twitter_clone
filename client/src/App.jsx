@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -12,30 +12,28 @@ import RepliesPage from './pages/RepliesPage';
 import ProfilePage from './pages/ProfilePage';
 import ErrorPage from './pages/ErrorPage';
 
+
 export default function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* public */}
+          <Route path="/login"    element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/post" element={<NewTweetPage />} />
-                  <Route path="/post/:id" element={<ReplyTweetPage />} />
-                  <Route path="/replies/:id" element={<RepliesPage />} />
-                  <Route path="/profile/:username" element={<ProfilePage />} />
-                  <Route path="*" element={<ErrorPage />} />
-                </Routes>
-              </ProtectedRoute>
-            }
-          />
+
+          {/* everything below here requires login */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/"                   element={<HomePage />} />
+            <Route path="/profile/:username" element={<ProfilePage />} />
+            <Route path="/post" element={<NewTweetPage />} />
+            <Route path="/post/:id" element={<ReplyTweetPage />} />
+            <Route path="/replies/:id" element={<RepliesPage />} />
+            <Route path="/profile/:username" element={<ProfilePage />} />
+            <Route path="*" element={<ErrorPage />} />
+          </Route>
         </Routes>
       </AuthProvider>
-    </Router>
+    </BrowserRouter>
   );
 }

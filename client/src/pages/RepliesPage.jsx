@@ -1,34 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import NavBar from '../components/NavBar';
 
-// Dummy original tweets data
-const dummyTweets = {
-    '1': { id: '1', author: 'alice', content: 'Hello world!' },
-    '3': { id: '3', author: 'bob', content: 'React is great!' },
-    '4': { id: '4', author: 'dave', content: 'Just setting up my X clone.' },
-    '5': { id: '5', author: 'eve', content: 'Does anyone know Tailwind CSS?' },
-    '6': { id: '6', author: 'frank', content: 'Yes! It’s awesome for utility-first styling.' },
-    '7': { id: '7', author: 'grace', content: 'Can’t wait to see this project finished!' },
-    '8': { id: '8', author: 'heidi', content: 'This looks great!' }
-  };
-
-// Dummy replies data
-const dummyReplies = {
-  '1': [{ id: '2', author: 'charlie', content: 'Agreed!' }]
-};
-
 export default function RepliesPage() {
   const { id } = useParams();
-  const original = dummyTweets[id];
-  const replies = dummyReplies[id] || [];
+  const [original, setOriginal] = useState(null);
+  const [replies, setReplies]   = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token'); // or however you store it
+    if (!token) return setError('Not authenticated');
+
+    async function fetchData() {
+      try {
+        // 1) fetch the original tweet
+        const tweetRes = await fetch(`/tweets/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!tweetRes.ok) throw new Error('Failed to load tweet');
+        const tweetData = await tweetRes.json();
+        setOriginal(tweetData);
+
+        // 2) fetch comments on that tweet
+        const commentsRes = await fetch(`/comments?tweet_id=${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!commentsRes.ok) throw new Error('Failed to load comments');
+        const commentsData = await commentsRes.json();
+        setReplies(commentsData);
+      } catch (err) {
+        console.error(err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [id]);
+
+  if (loading) return <div className="p-8 text-center">Loading…</div>;
+  if (error)   return <div className="p-8 text-red-500 text-center">{error}</div>;
 
   return (
     <div>
       <NavBar />
-      <main className="max-w-xl mx-auto mt-6">
+      <main className="max-w-xl mx-auto mt-6 space-y-6">
         {original && (
-          <article className="bg-white p-4 rounded-lg shadow mb-6">
+          <article className="bg-white p-4 rounded-lg shadow">
             <Link
               to={`/profile/${original.author}`}
               className="font-semibold text-gray-900 hover:text-blue-500"
@@ -43,12 +64,12 @@ export default function RepliesPage() {
           <h2 className="text-xl mb-4">Replies to Tweet #{id}</h2>
           {replies.length > 0 ? (
             replies.map(r => (
-              <div key={r.id} className="border-b py-2">
+              <div key={r.comment_id} className="border-b py-2">
                 <Link
-                  to={`/profile/${r.author}`}
+                  to={`/profile/${r.profile_id}`}
                   className="font-semibold text-gray-900 hover:text-blue-500"
                 >
-                  @{r.author}
+                  @{r.author} {/* or r.username, depending on what your API returns */}
                 </Link>
                 <p className="mt-1 text-gray-800">{r.content}</p>
               </div>
